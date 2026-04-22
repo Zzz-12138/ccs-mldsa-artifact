@@ -94,9 +94,9 @@ To eliminate false positives without oracle access:
 
 | Implementation | Optimization | Sampling Rate | Traces Required |
 | ---- | --- | --- | --- |
-| **Unprotected** | -O3 (Time) | 25 MSa/s | **< 10** |
+| **Unprotected** | -O3 (Time) | 25 MSa/s | **< 20** |
 | **Unprotected** | -O0 | 25 MSa/s | **< 15** |
-| **Masked (CHES 2024)** | -O3 | 25 MSa/s | **< 1,000** |
+| **Masked (CHES 2024)** | -O3 | 25 MSa/s | **< 160** |
 
 ## ⚠️ Disclaimer
 
