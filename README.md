@@ -6,30 +6,30 @@ This repository contains a compact artifact-evaluation package for the ML-DSA ho
 
 The CUDA code was developed and tested on NVIDIA GeForce RTX 3090 GPUs (Ampere, compute capability `sm_86`). The Makefile intentionally targets `sm_86` because this is the verified setup. GPUs with the same compute capability are expected to run the code, subject to memory limits, but the submitted runs were verified on RTX 3090.
 
-## Dataset Release
+## Data
 
-The compact artifact datasets are attached to the GitHub release:
+The compact trace archives are stored as split files under `archive_parts/` so that the complete artifact is available through the anonymous repository mirror.
 
-https://github.com/Zzz-12138/ccs-mldsa-artifact/releases/tag/artifact-v1
+Reassemble, verify, and extract from the repository root:
 
-Download the four release assets into `archives/`:
+```bash
+bash scripts/reassemble_archives.sh
+tar -xzf archives/data_unprotected_all.tar.gz
+tar -xzf archives/data_masked_44.tar.gz
+tar -xzf archives/data_masked_65.tar.gz
+tar -xzf archives/data_masked_87.tar.gz
+```
+
+The reassembly script recreates the four archives under `archives/` and verifies them with `sha256sum -c SHA256SUMS.txt`.
+
+The reassembled archives are:
 
 - `data_unprotected_all.tar.gz`: 20-trace subsets for unprotected ML-DSA-44/65/87.
 - `data_masked_44.tar.gz`: 200-trace subset for first-order masked ML-DSA-44.
 - `data_masked_65.tar.gz`: 200-trace subset for first-order masked ML-DSA-65.
 - `data_masked_87.tar.gz`: 200-trace subset for first-order masked ML-DSA-87.
 
-The compact dataset intentionally excludes raw INTT traces. INTT is not part of the default recovery path; it is discussed only as an ablation/leakage-surface observation and can be documented with precomputed logs.
-
-After downloading the archives, verify and extract from the repository root:
-
-```bash
-sha256sum -c SHA256SUMS.txt
-tar -xzf archives/data_unprotected_all.tar.gz
-tar -xzf archives/data_masked_44.tar.gz
-tar -xzf archives/data_masked_65.tar.gz
-tar -xzf archives/data_masked_87.tar.gz
-```
+The compact dataset intentionally excludes raw INTT traces. INTT is not part of the default recovery path; it is discussed only as an ablation/leakage-surface observation.
 
 ## Build
 
@@ -72,7 +72,6 @@ The reviewer-facing CSVs contain:
 - `Succ_ay`: recovered coefficients using `A*y` alone.
 - `Succ_fusion`: recovered coefficients using LD-guided fusion.
 - `Succ_fusion_sieve`: recovered coefficients after the algebraic sieve.
-- timing columns for scoring, fusion, sieve, and total runtime.
+- Timing columns for scoring, fusion, sieve, and total runtime.
 
 The subset is intended for artifact evaluation and sanity-check reproduction. Full-run CSV/log summaries should be used to document the complete paper-scale experiments.
-
