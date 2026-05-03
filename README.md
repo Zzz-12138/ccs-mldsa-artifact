@@ -1,112 +1,74 @@
-# When Lattice Algebra Leaks: Horizontal Fusion Attacks on ML-DSA
+# When Lattice Algebra Leaks: CCS Artifact
 
-This repository contains the Proof-of-Concept (PoC) artifacts for the paper **"When Lattice Algebra Leaks: Horizontal Fusion Attacks on ML-DSA"**.
+This repository contains a compact artifact-evaluation package for the ML-DSA horizontal fusion experiments. The default recovery path uses two measured operations, `A*y` and `c*s1`, and reports standalone operation recovery, LD-guided fusion, and fusion with the algebraic sieve.
 
-We demonstrate a side-channel attack framework targeting the algebraic redundancy in lattice-based cryptography (specifically ML-DSA/Dilithium). By combining **Joint Leakage Fusion** (aggregating leakage from $w=Ay$ and $u=cs_1$) with a deterministic **Algebraic Sieve** (exploiting INTT diffusion), we achieve full key recovery on ARM Cortex-M4 implementations with high efficiency.
+## Tested Platform
 
-## 📂 Project Structure
+The CUDA code was developed and tested on NVIDIA GeForce RTX 3090 GPUs (Ampere, compute capability `sm_86`). The Makefile intentionally targets `sm_86` because this is the verified setup. GPUs with the same compute capability are expected to run the code, subject to memory limits, but the submitted runs were verified on RTX 3090.
 
-```text
-.
-├── data/                   # Place raw binary trace files here (Not included in repo)
-├── results/                # Output directory for PDF plots and key candidates
-├── scripts/                # Core analysis scripts
-│   ├── mldsa_stepwise_pcc_lines.py  # Step-wise PCC trend analysis (Top 10 Plots)
-│   ├── attack_full_enum.py          # Full-space enumeration attack
-│   └── run_sieves.py                # Dual-Domain Sieve implementation
-├── requirements.txt        # Python dependencies
-└── README.md               # This file
+## Data
 
-```
+The trace archives are distributed as artifact/release assets rather than normal Git files:
 
-## 🚀 Environment Setup
+- `data_unprotected_all.tar.gz`: 20-trace subsets for unprotected ML-DSA-44/65/87.
+- `data_masked_44.tar.gz`: 200-trace subset for first-order masked ML-DSA-44.
+- `data_masked_65.tar.gz`: 200-trace subset for first-order masked ML-DSA-65.
+- `data_masked_87.tar.gz`: 200-trace subset for first-order masked ML-DSA-87.
 
-### 1. Prerequisites
+The compact dataset intentionally excludes raw INTT traces. INTT is not part of the default recovery path; it is discussed as an ablation/leakage-surface observation and can be documented with precomputed logs.
 
-The attack scripts are optimized for high-performance computing (64-core CPU recommended for full enumeration) and support GPU acceleration via `cupy`.
-
-**Required Hardware:**
-
-* **CPU:** Multi-core support (OpenMP/BLAS optimized).
-* **RAM:** >64GB recommended for full dataset loading.
-* **GPU (Optional but Recommended):** NVIDIA GPU for fast FFT filtering and correlation.
-
-### 2. Installation
-
-If running in **GitHub Codespaces** or a local Python environment:
+After downloading the archives into `archives/`, verify and extract from the repository root:
 
 ```bash
-# Update pip
-pip install --upgrade pip
-
-# Install dependencies
-pip install -r requirements.txt
-
+sha256sum -c SHA256SUMS.txt
+tar -xzf archives/data_unprotected_all.tar.gz
+tar -xzf archives/data_masked_44.tar.gz
+tar -xzf archives/data_masked_65.tar.gz
+tar -xzf archives/data_masked_87.tar.gz
 ```
 
-*(Note: If you do not have an NVIDIA GPU available in your environment, switch `cupy` to `numpy` in the imports, though performance will decrease.)*
-
-## 🧪 Usage Workflow
-
-### Step 1: Data Preparation
-
-Ensure your binary trace files are placed in the `data/` directory (or update the `DATA_DIR` path in the scripts).
-Expected file format: Flat `float32` binaries reshaped to `(N_traces, 256, Trace_Len)`.
-
-### Step 2: Step-wise PCC Trend Analysis
-
-Run this script to visualize how the correct key candidate emerges as the number of traces increases (e.g., from 4 to 40). This generates the PDF plots showing the "Top 10" candidates.
+## Build
 
 ```bash
-python scripts/mldsa_stepwise_pcc_lines.py
-
+make
 ```
 
-**Output:** PDFs in `results/mldsa_65/` (e.g., `mldsa_65_u_cs1_pcc_lines_coeff_6_num_40.pdf`).
+This builds:
 
-### Step 3: Full Key Recovery & Sieving
+- `bin/fusion_unprotected_artifact`
+- `bin/fusion_masked_artifact`
 
-Run the full enumeration attack to recover all 256 coefficients and apply the Dual-Domain Sieve to verify correctness.
+## Default Runs
+
+Unprotected, all three variants:
 
 ```bash
-python scripts/attack_full_enum.py
-
+bash scripts/run_unprotected_all.sh
 ```
 
-## 📊 Methodology Summary
+Masked/protected, all three variants:
 
-### 1. Joint Leakage Fusion (The Attack)
-
-We utilize the **Holographic** view of the secret key :
-
-* **Leakage A:** Sparse polynomial multiplication  (Input-dependent).
-* **Leakage B:** Matrix-vector multiplication  (Structure-dependent).
-* **Fusion:** We compute the Pearson Correlation Coefficient (PCC) across the full key space () to rank candidates.
-
-### 2. Algebraic Sieve (The Verification)
-
-To eliminate false positives without oracle access:
-
-* **INTT Diffusion:** We verify that  falls within the small norm range . A single error in the NTT domain results in a uniform random distribution in the normal domain, making false positives cryptographically negligible.
-* **Protocol Check:** We verify  satisfies the public key equation.
-
-## 📈 Results
-
-| Implementation | Optimization | Sampling Rate | Traces Required |
-| ---- | --- | --- | --- |
-| **Unprotected** | -O3 (Time) | 25 MSa/s | **< 20** |
-| **Unprotected** | -O0 | 25 MSa/s | **< 15** |
-| **Masked (CHES 2024)** | -O3 | 25 MSa/s | **< 160** |
-
-## ⚠️ Disclaimer
-
-This code is provided for research and educational purposes only. The traces and keys provided in this repository are from a laboratory test environment and do not represent real-world sensitive data.
-
+```bash
+bash scripts/run_masked_all.sh
 ```
-numpy>=1.24.0
-scipy>=1.10.0
-matplotlib>=3.7.0
-tqdm>=4.65.0
-pandas>=2.0.0
-cupy-cuda11x; platform_system!="Darwin"
+
+If some GPUs are busy, restrict execution to free devices:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 bash scripts/run_masked_all.sh
 ```
+
+The masked script defaults to `CUDA_VISIBLE_DEVICES=0,1` when the variable is not already set, and passes `use_intt=0`, matching the submitted compact dataset and default recovery path.
+
+## Output Columns
+
+The reviewer-facing CSVs contain:
+
+- `Succ_cs1`: recovered coefficients using `c*s1` alone.
+- `Succ_ay`: recovered coefficients using `A*y` alone.
+- `Succ_fusion`: recovered coefficients using LD-guided fusion.
+- `Succ_fusion_sieve`: recovered coefficients after the algebraic sieve.
+- timing columns for scoring, fusion, sieve, and total runtime.
+
+The subset is intended for artifact evaluation and sanity-check reproduction. Full-run CSV/log summaries should be used to document the complete paper-scale experiments.
+
