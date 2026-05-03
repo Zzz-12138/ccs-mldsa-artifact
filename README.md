@@ -6,18 +6,22 @@ This repository contains a compact artifact-evaluation package for the ML-DSA ho
 
 The CUDA code was developed and tested on NVIDIA GeForce RTX 3090 GPUs (Ampere, compute capability `sm_86`). The Makefile intentionally targets `sm_86` because this is the verified setup. GPUs with the same compute capability are expected to run the code, subject to memory limits, but the submitted runs were verified on RTX 3090.
 
-## Data
+## Dataset Release
 
-The trace archives are distributed as artifact/release assets rather than normal Git files:
+The compact artifact datasets are attached to the GitHub release:
+
+https://github.com/Zzz-12138/ccs-mldsa-artifact/releases/tag/artifact-v1
+
+Download the four release assets into `archives/`:
 
 - `data_unprotected_all.tar.gz`: 20-trace subsets for unprotected ML-DSA-44/65/87.
 - `data_masked_44.tar.gz`: 200-trace subset for first-order masked ML-DSA-44.
 - `data_masked_65.tar.gz`: 200-trace subset for first-order masked ML-DSA-65.
 - `data_masked_87.tar.gz`: 200-trace subset for first-order masked ML-DSA-87.
 
-The compact dataset intentionally excludes raw INTT traces. INTT is not part of the default recovery path; it is discussed as an ablation/leakage-surface observation and can be documented with precomputed logs.
+The compact dataset intentionally excludes raw INTT traces. INTT is not part of the default recovery path; it is discussed only as an ablation/leakage-surface observation and can be documented with precomputed logs.
 
-After downloading the archives into `archives/`, verify and extract from the repository root:
+After downloading the archives, verify and extract from the repository root:
 
 ```bash
 sha256sum -c SHA256SUMS.txt
